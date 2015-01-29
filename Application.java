@@ -1,4 +1,4 @@
-
+import audio.WaveAudioFilter;
 
 public class Application {
 
@@ -7,6 +7,6 @@ public class Application {
 	 * @param args This parameter is ignored
 	 */
 	public static void main(String args[]) {
-		System.out.println("Audio Resample project!");
+		new WaveAudioFilter().process();
 	}
 }
