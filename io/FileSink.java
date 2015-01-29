@@ -28,14 +28,15 @@ public class FileSink {
 	 * @throws FileNotFoundException If the path is not valid.
 	 */
 	public FileSink(String location) throws FileNotFoundException {
-		try {
-			/* open new handler to the file */
-			_writer = new DataOutputStream(
-						new BufferedOutputStream(
-							new FileOutputStream(location)));
-		} catch (FileNotFoundException e) {
-			throw e;
-		}
+		super();
+	    try {
+	    	_writer = new DataOutputStream(
+					new BufferedOutputStream(
+						new FileOutputStream(location)));
+	    }
+	    catch (FileNotFoundException e) {
+	       throw new RuntimeException(e);
+	    }
 	}
 	
 	/**

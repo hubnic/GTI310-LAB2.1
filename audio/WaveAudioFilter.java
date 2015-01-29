@@ -3,7 +3,10 @@ package audio;
 import io.FileSink;
 import io.FileSource;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
 
 import javax.swing.JOptionPane;
@@ -18,11 +21,17 @@ public class WaveAudioFilter implements AudioFilter{
 	private byte[] dataSubChunk;
 	private byte[] newDataSubChunk;
 	private FileSource fileSource;
-	private FileSink newFile = new FileSink(this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\Test.wav");
+	private FileSink newFile;// = new FileSink(this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\Test.wav");
 	private int dataChunkSize;
 	
 	public void process() 
 	{
+		try {
+			new FileSink(this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\Test.wav");
+	    }
+	    catch (FileNotFoundException e) {
+	    }
+		
 		getSource();
 		if (verifyHeaders()){
 			//System.out.println("True");
