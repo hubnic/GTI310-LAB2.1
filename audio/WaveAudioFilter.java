@@ -1,6 +1,6 @@
 package audio;
 
-public class ConcreteAudioFilter implements AudioFilter{
+public class WaveAudioFilter implements AudioFilter{
 
 	/**
 	 * @param args
