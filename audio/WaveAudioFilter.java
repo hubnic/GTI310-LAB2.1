@@ -72,17 +72,23 @@ public class WaveAudioFilter implements AudioFilter{
 		}
 	}
 	
-	private void interpolation(){
+	private void (){
 		
+		int microsec = 0;
+		int dataChunkSize = chunksize/*44100(8bits) ou 88200(16bits)*/  *(microsec*1000);  // 88.2*nb de microsec de delais pour du 16 bit, 44.1*nb de delais pour du 8 bit
 		dataSubChunk = fileSource.pop(dataChunkSize);
 		double indexSize = 44100/8000;
 		int index = 0;
+		double attenuation = 0;
 		int newDataSubChunkSize = (int)(dataSubChunk.length/indexSize) + 1;
 		newDataSubChunk = new byte[newDataSubChunkSize];
 
 		for(int i=0;i<dataSubChunk.length;i++){
 			if(i == (int)(index * indexSize)){
-				newDataSubChunk[index] = findYValue(i, ((int)index * indexSize));
+				if(index>0){
+					newDataSubChunk[index] = (findYValue(i, ((int)index * indexSize))) + findYValue(i, ((int)index-1 * indexSize));
+				}
+				
 				index++;
 			}
 		}
