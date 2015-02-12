@@ -16,18 +16,19 @@ public class WaveAudioFilter implements AudioFilter{
 	/**
 	 * @param args
 	 */
-	private String fileName = this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\App1Test1Mono8bits.wav";
+	private String fileName = this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\App1Test1Stereo16bits.wav";
 	private byte[] riffChunk = new byte[36];
 	private byte[] dataSubChunk;
 	private byte[] newDataSubChunk;
 	private FileSource fileSource;
-	private FileSink newFile;// = new FileSink(this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\Test.wav");
+	private FileSink newFile;
 	private int dataChunkSize;
+	private int chunkSize;
 	
 	public void process() 
 	{
 		try {
-			new FileSink(this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\Test.wav");
+			new FileSink(fileName);
 	    }
 	    catch (FileNotFoundException e) {
 	    }
@@ -35,7 +36,7 @@ public class WaveAudioFilter implements AudioFilter{
 		getSource();
 		if (verifyHeaders()){
 			//System.out.println("True");
-			interpolation();
+			addEcho();
 		}else{
 			JOptionPane.showMessageDialog(null, "Désolé, le fichier importé n'est pas un .wav (ou à 44100hz).");
 		}
@@ -52,7 +53,8 @@ public class WaveAudioFilter implements AudioFilter{
 		} catch (UnsupportedEncodingException e) {e.printStackTrace();}
 		dataChunkSize = (riffChunk[40] & 0xFF | (riffChunk[41] & 0xFF) << 8 | (riffChunk[42] & 0xFF) << 16 | (riffChunk[43] & 0xFF) << 24);
 		int fileRate = (riffChunk[24] & 0xFF | (riffChunk[25] & 0xFF) << 8 | (riffChunk[26] & 0xFF) << 16 | (riffChunk[27] & 0xFF) << 24);
-		//System.out.println(fileFormat + " " + fileRate);
+		chunkSize = (riffChunk[34] & 0xFF | (riffChunk[35] & 0xFF) << 8);
+		System.out.println(fileFormat + " " + fileRate + " " + chunkSize);
 		if(fileFormat != "WAVE" && fileRate != 44100){
 			fileSource.close();
 			return false;
@@ -72,21 +74,21 @@ public class WaveAudioFilter implements AudioFilter{
 		}
 	}
 	
-	private void (){
+	private void addEcho(){
 		
 		int microsec = 0;
-		int dataChunkSize = chunksize/*44100(8bits) ou 88200(16bits)*/  *(microsec*1000);  // 88.2*nb de microsec de delais pour du 16 bit, 44.1*nb de delais pour du 8 bit
+		int dataChunkSize = chunkSize/*44100(8bits) ou 88200(16bits)*/  *(microsec*1000);  // 88.2*nb de microsec de delais pour du 16 bit, 44.1*nb de delais pour du 8 bit
 		dataSubChunk = fileSource.pop(dataChunkSize);
 		double indexSize = 44100/8000;
 		int index = 0;
 		double attenuation = 0;
-		int newDataSubChunkSize = (int)(dataSubChunk.length/indexSize) + 1;
+		int newDataSubChunkSize = (int)(dataSubChunk.length + dataChunkSize);
 		newDataSubChunk = new byte[newDataSubChunkSize];
 
 		for(int i=0;i<dataSubChunk.length;i++){
 			if(i == (int)(index * indexSize)){
 				if(index>0){
-					newDataSubChunk[index] = (findYValue(i, ((int)index * indexSize))) + findYValue(i, ((int)index-1 * indexSize));
+					//newDataSubChunk[index] = (findYValue(i, ((int)index * indexSize))) + findYValue(i, ((int)index-1 * indexSize));
 				}
 				
 				index++;
