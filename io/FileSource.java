@@ -27,6 +27,7 @@ public class FileSource {
 	 */
 	public FileSource(String location) throws FileNotFoundException {
 		try {
+			System.out.println(location);
 			/* open the handler on the specified file */
 			_reader = new DataInputStream(
 						new BufferedInputStream(

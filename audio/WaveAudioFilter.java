@@ -16,8 +16,9 @@ public class WaveAudioFilter implements AudioFilter{
 	/**
 	 * @param args
 	 */
-	private String fileName = this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\App1Test1Stereo16bits.wav";
-	private byte[] riffChunk = new byte[36];
+	private String fileName = (this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\App1Test1Mono8bits.wav").substring(1).replace('/', '\\');
+	private String fileNameSink = (this.getClass().getClassLoader().getResource("").getPath() + "medias-TP2\\App1Test1Mono8bits2.wav").substring(1).replace('/', '\\');
+	private byte[] riffChunk = new byte[44];
 	private byte[] dataSubChunk;
 	private byte[] newDataSubChunk;
 	private FileSource fileSource;
@@ -28,7 +29,7 @@ public class WaveAudioFilter implements AudioFilter{
 	public void process() 
 	{
 		try {
-			new FileSink(fileName);
+			newFile = new FileSink(fileNameSink);
 	    }
 	    catch (FileNotFoundException e) {
 	    }
