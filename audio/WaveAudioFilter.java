@@ -55,7 +55,7 @@ public class WaveAudioFilter implements AudioFilter{
 		dataChunkSize = (riffChunk[40] & 0xFF | (riffChunk[41] & 0xFF) << 8 | (riffChunk[42] & 0xFF) << 16 | (riffChunk[43] & 0xFF) << 24);
 		int fileRate = (riffChunk[24] & 0xFF | (riffChunk[25] & 0xFF) << 8 | (riffChunk[26] & 0xFF) << 16 | (riffChunk[27] & 0xFF) << 24);
 		chunkSize = (riffChunk[34] & 0xFF | (riffChunk[35] & 0xFF) << 8);
-		System.out.println(fileFormat + " " + fileRate + " " + chunkSize);
+		//System.out.println(fileFormat + " " + fileRate + " " + chunkSize);
 		if(fileFormat != "WAVE" && fileRate != 44100){
 			fileSource.close();
 			return false;
@@ -77,23 +77,18 @@ public class WaveAudioFilter implements AudioFilter{
 	
 	private void addEcho(){
 		
-		int microsec = 0;
-		int dataChunkSize = chunkSize/*44100(8bits) ou 88200(16bits)*/  *(microsec*1000);  // 88.2*nb de microsec de delais pour du 16 bit, 44.1*nb de delais pour du 8 bit
-		dataSubChunk = fileSource.pop(dataChunkSize);
-		double indexSize = 44100/8000;
-		int index = 0;
+		int microsec = 1;
+		int sampleSize = chunkSize/*44100(8bits) ou 88200(16bits)*/  *(microsec*1000);  // 88.2*nb de microsec de delais pour du 16 bit, 44.1*nb de delais pour du 8 bit
 		double attenuation = 0;
-		int newDataSubChunkSize = (int)(dataSubChunk.length + dataChunkSize);
+		int newDataSubChunkSize = (int)(dataChunkSize + sampleSize);
 		newDataSubChunk = new byte[newDataSubChunkSize];
+		byte[] echoTable = new byte[sampleSize];
 
-		for(int i=0;i<dataSubChunk.length;i++){
-			if(i == (int)(index * indexSize)){
-				if(index>0){
-					//newDataSubChunk[index] = (findYValue(i, ((int)index * indexSize))) + findYValue(i, ((int)index-1 * indexSize));
-				}
-				
-				index++;
-			}
+		for(int i=0;i<dataChunkSize/sampleSize + 1;i++){
+			dataSubChunk = fileSource.pop(sampleSize);
+			
+			insertDataToNewTable(dataSubChunk, echoTable, i);
+			echoTable = dataSubChunk;
 		}
 
 		newFile.push(modifyHeader());
@@ -102,17 +97,17 @@ public class WaveAudioFilter implements AudioFilter{
 		newFile.close();
 	}
 	
-	private byte findYValue(int currentIndex, double targetedIndex){
-		if(currentIndex < dataSubChunk.length -1){
-			int value1 = dataSubChunk[currentIndex];
-			int value2 = dataSubChunk[currentIndex + 1];
-			
-			int variation = (value2 - value1);
-			return (byte)((int)((variation * (targetedIndex-value1)) + value1));
+	private void insertDataToNewTable(byte[] tableIn, byte[] tableEcho, int index){
+		for(int i = index; i < tableIn.length + index; i++){
+			if(index != 0){
+				newDataSubChunk[i] = (byte) (tableIn[i - index] & 0xFF | (tableEcho[i - index] & 0xFF));
+			}
+			else
+				newDataSubChunk[i] = tableIn[i - index];
 		}
-		else
-			return dataSubChunk[currentIndex];
+		
 	}
+	
 	private byte[] modifyHeader(){
 		byte[] newHeader = new byte[36];
 		byte[] newFileSize = new byte[4];
@@ -158,7 +153,6 @@ public class WaveAudioFilter implements AudioFilter{
 			(byte)(value >> 24)};
 	}
 	
-	//TODO À enlever?
 	public static int byteArrayToInt(byte[] b) 
 	{
 	    int value = 0;
