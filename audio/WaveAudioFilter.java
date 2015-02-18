@@ -36,10 +36,9 @@ public class WaveAudioFilter implements AudioFilter{
 		
 		getSource();
 		if (verifyHeaders()){
-			//System.out.println("True");
 			addEcho();
 		}else{
-			JOptionPane.showMessageDialog(null, "Désolé, le fichier importé n'est pas un .wav (ou à 44100hz).");
+			JOptionPane.showMessageDialog(null, "Désolé, le fichier importé n'est pas valide");
 		}
 	}
 
@@ -60,7 +59,7 @@ public class WaveAudioFilter implements AudioFilter{
 			fileSource.close();
 			return false;
 		}else{
-			return true;	
+			return true;
 		}
 	}
 	
@@ -83,11 +82,11 @@ public class WaveAudioFilter implements AudioFilter{
 		int newDataSubChunkSize = (int)(dataChunkSize + sampleSize);
 		newDataSubChunk = new byte[newDataSubChunkSize];
 		byte[] echoTable = new byte[sampleSize];
-
+		
 		for(int i=0;i<dataChunkSize/sampleSize + 1;i++){
 			dataSubChunk = fileSource.pop(sampleSize);
 			
-			insertDataToNewTable(dataSubChunk, echoTable, i);
+			insertDataToNewTable(dataSubChunk, echoTable, i*sampleSize);
 			echoTable = dataSubChunk;
 		}
 
@@ -98,44 +97,33 @@ public class WaveAudioFilter implements AudioFilter{
 	}
 	
 	private void insertDataToNewTable(byte[] tableIn, byte[] tableEcho, int index){
-		for(int i = index; i < tableIn.length + index; i++){
+		//System.out.println();	
+		for(int i = 0; i < tableIn.length; i++){
 			if(index != 0){
-				newDataSubChunk[i] = (byte) (tableIn[i - index] & 0xFF | (tableEcho[i - index] & 0xFF));
+				newDataSubChunk[i+index] = (byte) (tableIn[i] & 0xFF | (tableEcho[i] & 0xFF) << 8);
+				//System.out.println(tableIn[i] + " " + (byte) (tableIn[i] & 0xFF | (tableEcho[i] & 0xFF) << 8));
 			}
-			else
-				newDataSubChunk[i] = tableIn[i - index];
+			else{
+				newDataSubChunk[i] = tableIn[i];
+			}
 		}
 		
 	}
 	
 	private byte[] modifyHeader(){
-		byte[] newHeader = new byte[36];
+		byte[] newHeader = new byte[44];
 		byte[] newFileSize = new byte[4];
-		byte[] fileRate = new byte[4];
 		byte[] newDataChunkSize = new byte[4];
-		byte[] newByteRate = new byte[4];
 		
 		newHeader = riffChunk;
 		fileSource.close();
-		newFileSize = intToByteArray(newDataSubChunk.length + 36);
-		fileRate = intToByteArray(8000);
-		newByteRate = intToByteArray(1000);
+		newFileSize = intToByteArray(newDataSubChunk.length + 44);
 		newDataChunkSize = intToByteArray(newDataSubChunk.length);
 		
 		newHeader[4] = newFileSize[0];
 		newHeader[5] = newFileSize[1];
 		newHeader[6] = newFileSize[2];
 		newHeader[7] = newFileSize[3];
-		
-		newHeader[24] = fileRate[0];
-		newHeader[25] = fileRate[1];
-		newHeader[26] = fileRate[2];
-		newHeader[27] = fileRate[3];
-		
-		newHeader[28] = newByteRate[0];
-		newHeader[29] = newByteRate[1];
-		newHeader[30] = newByteRate[2];
-		newHeader[31] = newByteRate[3];
 		
 		newHeader[40] = newDataChunkSize[0];
 		newHeader[41] = newDataChunkSize[1];
@@ -144,7 +132,7 @@ public class WaveAudioFilter implements AudioFilter{
 
 		return newHeader;
 	}
-	
+	//http://stackoverflow.com/questions/7619058/convert-a-byte-array-to-integer-in-java-and-vise-versa
 	public byte[] intToByteArray(int value) {
 		return new byte[] {
 			(byte)value,
@@ -152,15 +140,4 @@ public class WaveAudioFilter implements AudioFilter{
 			(byte)(value >> 16),
 			(byte)(value >> 24)};
 	}
-	
-	public static int byteArrayToInt(byte[] b) 
-	{
-	    int value = 0;
-	    for (int i = 0; i < 4; i++) {
-	        int shift = (4 - 1 - i) * 8;
-	        value += (b[i] & 0x000000FF) << shift;
-	    }
-	    return value;
-	}
-
 }
